@@ -5,7 +5,8 @@ import { transcribeVoice } from './voice.js';
 import { getState, applyPatch } from './db.js';
 import { broadcast } from './sse.js';
 
-let chatId = TELEGRAM_CHAT_ID ? parseInt(TELEGRAM_CHAT_ID) : null;
+const ALLOWED_CHAT_ID = TELEGRAM_CHAT_ID ? parseInt(TELEGRAM_CHAT_ID) : null;
+let chatId = ALLOWED_CHAT_ID;
 export const getChatId = () => chatId;
 
 export function createBot() {
@@ -13,6 +14,11 @@ export function createBot() {
   const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: usePolling, webHook: false });
 
   bot.on('message', async (msg) => {
+    // Only respond to your Telegram account
+    if (ALLOWED_CHAT_ID && msg.chat.id !== ALLOWED_CHAT_ID) {
+      await bot.sendMessage(msg.chat.id, '🔒 Unauthorized.');
+      return;
+    }
     chatId = msg.chat.id;
     let text = null;
 

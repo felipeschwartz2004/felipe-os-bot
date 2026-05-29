@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cron from 'node-cron';
-import { PORT, WEBHOOK_URL, TIMEZONE } from './config.js';
+import { PORT, WEBHOOK_URL, TIMEZONE, API_SECRET } from './config.js';
 import { createBot, getChatId } from './bot.js';
 import { initState, getState, saveState, applyPatch } from './db.js';
 import { addClient, removeClient, broadcast } from './sse.js';
@@ -13,8 +13,19 @@ app.use(express.json());
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
+// API key guard — all /api/* routes require Authorization header or ?secret= param
+app.use('/api', (req, res, next) => {
+  if (!API_SECRET) return next(); // no secret = open (dev mode)
+  const header = req.headers['authorization'] || '';
+  const query  = req.query.secret || '';
+  if (header !== `Bearer ${API_SECRET}` && query !== API_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   next();
 });
 
