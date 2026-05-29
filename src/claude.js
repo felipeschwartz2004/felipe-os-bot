@@ -1,7 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY } from './config.js';
 
-const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+// Lazy-initialize so the key is read after dotenv has loaded
+let _client = null;
+function getClient() {
+  if (!_client) _client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+  return _client;
+}
 
 const SYSTEM = `You are Felipe's personal OS assistant. He talks naturally — parse his message and return a JSON action to update his dashboard.
 
@@ -42,7 +47,7 @@ Habits: ${Object.entries(state.habits).map(([id, h]) => `[${id}] ${h.name} (${h.
 Reminders: ${state.reminders.map(r => `[${r.id}] "${r.text}"`).join(' | ')}
 Goals wk: ${state.goals.wk.map(g => `[${g.id}] "${g.text}"`).join(' | ')}`;
 
-  const { content } = await client.messages.create({
+  const { content } = await getClient().messages.create({
     model: 'claude-sonnet-4-5',
     max_tokens: 512,
     system: SYSTEM,
