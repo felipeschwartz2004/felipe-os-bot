@@ -43,7 +43,7 @@ Reminders: ${state.reminders.map(r => `[${r.id}] "${r.text}"`).join(' | ')}
 Goals wk: ${state.goals.wk.map(g => `[${g.id}] "${g.text}"`).join(' | ')}`;
 
   const { content } = await client.messages.create({
-    model: 'claude-opus-4-7',
+    model: 'claude-sonnet-4-5',
     max_tokens: 512,
     system: SYSTEM,
     messages: [{ role: 'user', content: `${context}\n\nMessage: "${text}"` }],
